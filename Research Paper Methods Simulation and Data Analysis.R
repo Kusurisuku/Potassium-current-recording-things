@@ -5,11 +5,12 @@ t<- seq(0, 15000, by = 1) # time in ms
 
 #imaging this is a cell with ~100pF cellular capacitance
 y_no_noise <- 1800*exp(-t/60) + 1500*exp(-t/800) + 1300*exp(-t/4000) + 400 # simulate a 3-exponential decay with errors
-error_sd <- sqrt(y_no_noise)
+error_sd <- sqrt(y_no_noise) #poission error
 y <- y_no_noise + rnorm(length(t), 0, sd=error_sd)
 max_current <- max(y) #for determine current upper boundary
 max_tau <- max(t)# for determine tau upper boundary
 
+library(minpack.lm)
 
 # 2 exponential fitting the simulated data with initial guesses and boundaries
 fit_2exp <- nlsLM(
