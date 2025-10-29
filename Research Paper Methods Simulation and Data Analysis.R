@@ -1,20 +1,27 @@
 #simulate data
+
+#Create a list of data to dissect, imaging this is a cell with ~100pF cellular capacitance
+data_list <- lapply(1:3, function(i) {
 t<- seq(0, 15000, by = 1) # time in ms
-
-#Create a list of data sets to dissect
-
-#imaging this is a cell with ~100pF cellular capacitance
 y_no_noise <- 1800*exp(-t/60) + 1500*exp(-t/800) + 1300*exp(-t/4000) + 400 # simulate a 3-exponential decay with errors
 error_sd <- sqrt(y_no_noise) #poission error
 y <- y_no_noise + rnorm(length(t), 0, sd=error_sd)
+data.frame(t = t, y = y)
+})
+
 max_current <- max(y) #for determine current upper boundary
 max_tau <- max(t)# for determine tau upper boundary
 
 library(minpack.lm)
 
+for (i in 1:length(data_list)) {
+  
+  data <- data_list[[i]]
+
 # 2 exponential fitting the simulated data with initial guesses and boundaries
 fit_2exp <- nlsLM(
   y ~ A1*exp(-t/tau1) + A2*exp(-t/tau2) + C,
+  data = data,
   start = list(A1=4000, tau1=50, A2=1500, tau2=500, C=40),
   lower = c(A1=0, tau1=0, A2=0, tau2=0, C=0),
   upper = c(A1=max_current, tau1=max_tau, A2=max_current, tau2=max_tau, C=max_current)
@@ -60,6 +67,7 @@ legend("topright", legend=c("Data","Total Fit","τ1","τ2","Residule","Steady-st
 # 3 exponential fitting the simulated data with initial guesses and boundaries
 fit_3exp <- nlsLM(
   y ~ A1*exp(-t/tau1) + A2*exp(-t/tau2) + A3*exp(-t/tau3) + C,
+  data = data,
   start = list(A1=4000, tau1=50, A2=1500, tau2=500, A3=500, tau3=4000, C=40),
   lower = c(A1=0, tau1=0, A2=0, tau2=0, A3=0, tau3=0, C=0),
   upper = c(A1=max_current, tau1=max_tau, A2=max_current, tau2=max_tau, A3=max_current, tau3=max_tau, C=max_current)
@@ -107,6 +115,7 @@ legend("topright", legend=c("Data","Total Fit","τ1","τ2","τ3","Residule","Ste
 # 4 exponential fitting the simulated data with initial guesses and boundaries
 fit_4exp <- nlsLM(
   y ~ A1*exp(-t/tau1) + A2*exp(-t/tau2) + A3*exp(-t/tau3) + A4*exp(-t/tau4) + C,
+  data = data,
   start = list(A1=2000, tau1=50, A2=1500, tau2=500, A3=1500, tau3=2000, A4=1500, tau4=5000, C=40),
   lower = c(A1=0, tau1=0, A2=0, tau2=0, A3=0, tau3=0, A4=0, tau4=0, C=0),
   upper = c(A1=max_current, tau1=max_tau, A2=max_current, tau2=max_tau, A3=max_current, tau3=max_tau, A4=max_current, tau4=max_tau, C=max_current)
@@ -154,4 +163,4 @@ lines(t, res, col="orange", lwd=0.5)
 lines(t, steady, col="yellow", lwd=2)
 legend("topright", legend=c("Data","Total Fit","τ1","τ2","τ3","τ4", "Residule","Steady-state current"),
        col=c("black","red","blue","green","purple","cyan","orange","yellow"), lty=1)
-
+}
