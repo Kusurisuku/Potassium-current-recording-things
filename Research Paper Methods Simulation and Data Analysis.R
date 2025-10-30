@@ -9,20 +9,30 @@ y <- y_no_noise + rnorm(length(t), 0, sd=error_sd)
 data.frame(t = t, y = y)
 })
 
-max_current <- max(y) #for determine current upper boundary
-max_tau <- max(t)# for determine tau upper boundary
 
 library(minpack.lm)
+nlc <- nls.control(maxiter = 1000)
+
+#create a list for results from each loop
+result_list <- list()
+result_list[["2exp"]] <- list()
+result_list[["3exp"]] <- list()
+result_list[["4exp"]] <- list()
+
 
 for (i in 1:length(data_list)) {
   
-  data <- data_list[[i]]
+  y <- data_list[[i]]$y
+  t <- data_list[[i]]$t
+  
+  max_current <- max(y) #for determine current upper boundary
+  max_tau <- max(t)# for determine tau upper boundary
 
 # 2 exponential fitting the simulated data with initial guesses and boundaries
 fit_2exp <- nlsLM(
   y ~ A1*exp(-t/tau1) + A2*exp(-t/tau2) + C,
-  data = data,
   start = list(A1=4000, tau1=50, A2=1500, tau2=500, C=40),
+  control=nlc,
   lower = c(A1=0, tau1=0, A2=0, tau2=0, C=0),
   upper = c(A1=max_current, tau1=max_tau, A2=max_current, tau2=max_tau, C=max_current)
 )
@@ -63,12 +73,21 @@ lines(t, steady, col="yellow", lwd=2)
 legend("topright", legend=c("Data","Total Fit","τ1","τ2","Residule","Steady-state current"),
        col=c("black","red","blue","green","orange","yellow"), lty=1)
 
+#write parameters from 2-exp fit into the result list
+result_list[["2exp"]][[i]] <- list()
+result_list[['2exp']][[i]]<- data.frame(
+  ID = paste0("Fit_", i,"-2_exp"),
+  Amp1 = A1,
+  Amp2 = A2,
+  Tau1 = tau1,
+  Tau2 = tau2
+)
 
 # 3 exponential fitting the simulated data with initial guesses and boundaries
 fit_3exp <- nlsLM(
   y ~ A1*exp(-t/tau1) + A2*exp(-t/tau2) + A3*exp(-t/tau3) + C,
-  data = data,
   start = list(A1=4000, tau1=50, A2=1500, tau2=500, A3=500, tau3=4000, C=40),
+  control=nlc,
   lower = c(A1=0, tau1=0, A2=0, tau2=0, A3=0, tau3=0, C=0),
   upper = c(A1=max_current, tau1=max_tau, A2=max_current, tau2=max_tau, A3=max_current, tau3=max_tau, C=max_current)
 )
@@ -112,11 +131,23 @@ lines(t, steady, col="yellow", lwd=2)
 legend("topright", legend=c("Data","Total Fit","τ1","τ2","τ3","Residule","Steady-state current"),
        col=c("black","red","blue","green","purple","orange","yellow"), lty=1)
 
+#write parameters from 3-exp fit into the result list
+result_list[["3exp"]][[i]] <- list()
+result_list[["3exp"]][[i]]<- data.frame(
+  ID = paste0("Fit_", i,"-3_exp"),
+  Amp1 = A1,
+  Amp2 = A2,
+  Amp3 = A3,
+  Tau1 = tau1,
+  Tau2 = tau2,
+  Tau3 = tau3
+)
+
 # 4 exponential fitting the simulated data with initial guesses and boundaries
 fit_4exp <- nlsLM(
   y ~ A1*exp(-t/tau1) + A2*exp(-t/tau2) + A3*exp(-t/tau3) + A4*exp(-t/tau4) + C,
-  data = data,
-  start = list(A1=2000, tau1=50, A2=1500, tau2=500, A3=1500, tau3=2000, A4=1500, tau4=5000, C=40),
+  control=nlc,
+  start = list(A1=2000, tau1=50, A2=1500, tau2=600, A3=1000, tau3=2000, A4=1300, tau4=4000, C=40),
   lower = c(A1=0, tau1=0, A2=0, tau2=0, A3=0, tau3=0, A4=0, tau4=0, C=0),
   upper = c(A1=max_current, tau1=max_tau, A2=max_current, tau2=max_tau, A3=max_current, tau3=max_tau, A4=max_current, tau4=max_tau, C=max_current)
 )
@@ -163,4 +194,18 @@ lines(t, res, col="orange", lwd=0.5)
 lines(t, steady, col="yellow", lwd=2)
 legend("topright", legend=c("Data","Total Fit","τ1","τ2","τ3","τ4", "Residule","Steady-state current"),
        col=c("black","red","blue","green","purple","cyan","orange","yellow"), lty=1)
+
+#write parameters from 4-exp fit into the result list
+result_list[["4exp"]][[i]] <- list()
+result_list[["4exp"]][[i]]<- data.frame(
+  ID = paste0("Fit_", i,"-4_exp"),
+  Amp1 = A1,
+  Amp2 = A2,
+  Amp3 = A3,
+  Amp4 = A4,
+  Tau1 = tau1,
+  Tau2 = tau2,
+  Tau3 = tau3,
+  Tau4 = tau4
+)
 }
