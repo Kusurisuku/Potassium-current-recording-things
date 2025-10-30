@@ -43,20 +43,19 @@ y_fit <- predict(fit_2exp)
 
 # Plot other fitted components
 
+summary(fit_2exp)
+coef(fit_2exp)
+
 res <- resid(fit_2exp)
 RSS <- sum(res^2)
 TSS <- sum((y - mean(y))^2)
 R2 <- 1 - RSS/TSS
-R2
-
-summary(fit_2exp)
-coef(fit_2exp)
-
 params <- coef(fit_2exp)
 stats <- summary(fit_2exp)
 dof <- stats$df[2]
 chi_2exp <- sum(((y-y_fit)^2)/(y_fit))
 red_chi_2exp <- chi_2exp/dof
+SSE_2exp = sum(((y-y_fit)^2))
 A1 <- params["A1"]; tau1 <- params["tau1"]
 A2 <- params["A2"]; tau2 <- params["tau2"]; C <- params["C"]
 
@@ -80,7 +79,10 @@ result_list[['2exp']][[i]]<- data.frame(
   Amp1 = A1,
   Amp2 = A2,
   Tau1 = tau1,
-  Tau2 = tau2
+  Tau2 = tau2,
+  SSE_2exp = SSE_2exp,
+  red_chi_2exp = red_chi_2exp,
+  R2 = R2
 )
 
 # 3 exponential fitting the simulated data with initial guesses and boundaries
@@ -98,20 +100,19 @@ y_fit <- predict(fit_3exp)
 
 # Plot other fitted components
 
+summary(fit_3exp)
+coef(fit_3exp)
+
 res <- resid(fit_3exp)
 RSS <- sum(res^2)
 TSS <- sum((y - mean(y))^2)
 R2 <- 1 - RSS/TSS
-R2
-
-summary(fit_3exp)
-coef(fit_3exp)
-
 params <- coef(fit_3exp)
 stats <- summary(fit_3exp)
 dof <- stats$df[2]
 chi_3exp <- sum(((y-y_fit)^2)/(y_fit))
 red_chi_3exp <- chi_3exp/dof
+SSE_3exp = sum(((y-y_fit)^2))
 A1 <- params["A1"]; tau1 <- params["tau1"]
 A2 <- params["A2"]; tau2 <- params["tau2"]
 A3 <- params["A3"]; tau3 <- params["tau3"]; C <- params["C"]
@@ -140,14 +141,17 @@ result_list[["3exp"]][[i]]<- data.frame(
   Amp3 = A3,
   Tau1 = tau1,
   Tau2 = tau2,
-  Tau3 = tau3
+  Tau3 = tau3,
+  SSE_3exp = SSE_3exp,
+  red_chi_3exp = red_chi_3exp,
+  R2 = R2
 )
 
 # 4 exponential fitting the simulated data with initial guesses and boundaries
 fit_4exp <- nlsLM(
   y ~ A1*exp(-t/tau1) + A2*exp(-t/tau2) + A3*exp(-t/tau3) + A4*exp(-t/tau4) + C,
   control=nlc,
-  start = list(A1=2000, tau1=50, A2=1500, tau2=600, A3=1000, tau3=2000, A4=1300, tau4=4000, C=40),
+  start = list(A1=2000, tau1=50, A2=1500, tau2=600, A3=1000, tau3=2000, A4=1300, tau4=3000, C=40),
   lower = c(A1=0, tau1=0, A2=0, tau2=0, A3=0, tau3=0, A4=0, tau4=0, C=0),
   upper = c(A1=max_current, tau1=max_tau, A2=max_current, tau2=max_tau, A3=max_current, tau3=max_tau, A4=max_current, tau4=max_tau, C=max_current)
 )
@@ -158,20 +162,19 @@ y_fit <- predict(fit_4exp)
 
 # Plot other fitted components
 
+summary(fit_4exp)
+coef(fit_4exp)
+
 res <- resid(fit_4exp)
 RSS <- sum(res^2)
 TSS <- sum((y - mean(y))^2)
 R2 <- 1 - RSS/TSS
-R2
-
-summary(fit_4exp)
-coef(fit_4exp)
-
 params <- coef(fit_4exp)
 stats <- summary(fit_4exp)
 dof <- stats$df[2]
 chi_4exp <- sum(((y-y_fit)^2)/(y_fit))
 red_chi_4exp <- chi_4exp/dof
+SSE_4exp = sum(((y-y_fit)^2))
 A1 <- params["A1"]; tau1 <- params["tau1"]
 A2 <- params["A2"]; tau2 <- params["tau2"]
 A3 <- params["A2"]; tau3 <- params["tau3"]
@@ -206,6 +209,11 @@ result_list[["4exp"]][[i]]<- data.frame(
   Tau1 = tau1,
   Tau2 = tau2,
   Tau3 = tau3,
-  Tau4 = tau4
+  Tau4 = tau4,
+  SSE_4exp = SSE_4exp,
+  red_chi_4exp = red_chi_4exp,
+  R2 = R2
 )
 }
+
+#analyze listed results
