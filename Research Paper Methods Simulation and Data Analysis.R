@@ -1,7 +1,11 @@
 #simulate data
 
 #Create a list of data to dissect, imaging this is a cell with ~100pF cellular capacitance
+<<<<<<< HEAD
 data_list <- lapply(1:3, function(i) {
+=======
+data_list <- lapply(1:5, function(i) {
+>>>>>>> 28207e516b8328a8a4a0f1db9a218899e1f14978
 t<- seq(0, 15000, by = 1) # time in ms
 y_no_noise <- 1800*exp(-t/60) + 1500*exp(-t/800) + 1300*exp(-t/4000) + 400 # simulate a 3-exponential decay with errors
 error_sd <- sqrt(y_no_noise) #poission error
@@ -9,6 +13,11 @@ y <- y_no_noise + rnorm(length(t), 0, sd=error_sd)
 data.frame(t = t, y = y)
 })
 
+<<<<<<< HEAD
+=======
+max_current <- max(y) #for determine current upper boundary
+max_tau <- max(t)# for determine tau upper boundary
+>>>>>>> 28207e516b8328a8a4a0f1db9a218899e1f14978
 
 library(minpack.lm)
 nlc <- nls.control(maxiter = 1000)
