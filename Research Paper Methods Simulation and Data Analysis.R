@@ -1,7 +1,7 @@
 #simulate data
 
 #Create a list of data to dissect, imaging this is a cell with ~100pF cellular capacitance
-data_list <- lapply(1:3, function(i) {
+data_list <- lapply(1:10, function(i) {
 t<- seq(0, 15000, by = 1) # time in ms
 y_no_noise <- 1800*exp(-t/60) + 1500*exp(-t/800) + 1300*exp(-t/4000) + 400 # simulate a 3-exponential decay with errors
 error_sd <- sqrt(y_no_noise) #poission error
@@ -11,6 +11,8 @@ data.frame(t = t, y = y)
 
 
 library(minpack.lm)
+library(ggplot2)
+library(tidyr)
 nlc <- nls.control(maxiter = 1000)
 
 #create a list for results from each loop
@@ -148,13 +150,16 @@ result_list[["3exp"]][[i]]<- data.frame(
 )
 
 # 4 exponential fitting the simulated data with initial guesses and boundaries
-fit_4exp <- nlsLM(
+
+fit_4exp <- try(nlsLM(
   y ~ A1*exp(-t/tau1) + A2*exp(-t/tau2) + A3*exp(-t/tau3) + A4*exp(-t/tau4) + C,
   control=nlc,
-  start = list(A1=2000, tau1=50, A2=1500, tau2=600, A3=1000, tau3=2000, A4=1300, tau4=3000, C=40),
+  start = list(A1=1800, tau1=60, A2=1500, tau2=800, A3=700, tau3=4000, A4=1500, tau4=4000, C=40),
   lower = c(A1=0, tau1=0, A2=0, tau2=0, A3=0, tau3=0, A4=0, tau4=0, C=0),
   upper = c(A1=max_current, tau1=max_tau, A2=max_current, tau2=max_tau, A3=max_current, tau3=max_tau, A4=max_current, tau4=max_tau, C=max_current)
-)
+  ),
+  silent=FALSE)
+if (inherits(fit_4exp, "try-error")) next
 
 
 # Generate fitted curve
@@ -217,3 +222,18 @@ result_list[["4exp"]][[i]]<- data.frame(
 }
 
 #analyze listed results
+
+data_names <- c("2-exponential", "3-Exponential", "4-Exponential")
+rc2m <- sapply(result_list$`2exp`, function(x) x$R2)
+rc3m <- sapply(result_list$`3exp`, function(x) x$R2)
+rc4m_pre <- sapply(result_list$`4exp`, function(x) x$R2) #before correct length
+rc4m <- c(rc4m_pre, rep(NA, length(rc3m) - length(rc4m_pre)))
+r_values <- c(rc2m, rc3m, rc4m) 
+table <- data.frame("2exp"=rc2m, "3exp"=rc3m, "4exp"=rc4m)
+
+df_long <- pivot_longer(table, cols = everything(), names_to = "Exponential", values_to = "Value")
+ggplot(df_long, aes(x = Exponential, y = Value, color = Exponential)) +
+  geom_jitter(width = 0.1, size = 3, alpha = 0.8) +
+  theme_minimal() +
+  labs(x = "Exponential Term", y = "Value", title = "Scatter points for each exponential") +
+  theme(legend.position = "none")
