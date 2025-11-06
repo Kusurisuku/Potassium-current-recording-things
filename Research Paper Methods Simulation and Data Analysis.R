@@ -1,5 +1,10 @@
 #simulate data
 
+library(minpack.lm) #library for exponential fitting
+library(ggplot2) #library for plotting
+library(tidyr) #library for data format conversion from table data frame to a long list, which is easier for plotting
+library(agricolae) #library for the Student–Newman–Keuls post hoc test
+
 #Create a list of data to dissect, imaging this is a cell with ~100pF cellular capacitance
 data_list <- lapply(1:200, function(i) {
 t<- seq(0, 15000, by = 1) # time in ms
@@ -9,22 +14,17 @@ y <- y_no_noise + rnorm(length(t), 0, sd=error_sd)
 data.frame(t = t, y = y)
 })
 
-
-library(minpack.lm)
-library(ggplot2)
-library(tidyr)
-nlc <- nls.control(maxiter = 1000)
-
 #create a list for results from each loop
 result_2exp <- list()
 result_3exp <- list()
 result_4exp <- list()
 
+nlc <- nls.control(maxiter = 1000) #increase the fitting attempts to 1000 from default
 
 for (i in 1:length(data_list)) {
   
-  y <- data_list[[i]]$y
-  t <- data_list[[i]]$t
+  y <- data_list[[i]]$y #y axis
+  t <- data_list[[i]]$t #x axis
   
   max_current <- max(y) #for determine current upper boundary
   max_tau <- max(t)# for determine tau upper boundary
@@ -38,14 +38,9 @@ fit_2exp <- nlsLM(
   upper = c(A1=max_current, tau1=max_tau, A2=max_current, tau2=max_tau, C=max_current)
 )
 
-
-# Generate fitted curve
 y_fit <- predict(fit_2exp)
 
 # Plot other fitted components
-
-summary(fit_2exp)
-coef(fit_2exp)
 
 res <- resid(fit_2exp)
 RSS <- sum(res^2)
@@ -60,6 +55,7 @@ SSE_2exp = sum(((y-y_fit)^2))
 A1 <- params["A1"]; tau1 <- params["tau1"]
 A2 <- params["A2"]; tau2 <- params["tau2"]; C <- params["C"]
 
+# Generate fitted curve
 comp1 <- A1*exp(-t/tau1)
 comp2 <- A2*exp(-t/tau2)
 steady <- rep(params["C"],length(t))
@@ -95,14 +91,9 @@ fit_3exp <- nlsLM(
   upper = c(A1=max_current, tau1=max_tau, A2=max_current, tau2=max_tau, A3=max_current, tau3=max_tau, C=max_current)
 )
 
-
-# Generate fitted curve
 y_fit <- predict(fit_3exp)
 
 # Plot other fitted components
-
-summary(fit_3exp)
-coef(fit_3exp)
 
 res <- resid(fit_3exp)
 RSS <- sum(res^2)
@@ -118,6 +109,7 @@ A1 <- params["A1"]; tau1 <- params["tau1"]
 A2 <- params["A2"]; tau2 <- params["tau2"]
 A3 <- params["A3"]; tau3 <- params["tau3"]; C <- params["C"]
 
+# Generate fitted curve
 comp1 <- A1*exp(-t/tau1)
 comp2 <- A2*exp(-t/tau2)
 comp3 <- A3*exp(-t/tau3)
@@ -160,14 +152,9 @@ fit_4exp <- try(nlsLM(
   silent=FALSE)
 if (inherits(fit_4exp, "try-error")) next
 
-
-# Generate fitted curve
 y_fit <- predict(fit_4exp)
 
 # Plot other fitted components
-
-summary(fit_4exp)
-coef(fit_4exp)
 
 res <- resid(fit_4exp)
 RSS <- sum(res^2)
@@ -185,6 +172,7 @@ A3 <- params["A2"]; tau3 <- params["tau3"]
 A4 <- params["A4"]; tau4 <- params["tau4"]
 C <- params["C"]
 
+# Generate fitted curve
 comp1 <- A1*exp(-t/tau1)
 comp2 <- A2*exp(-t/tau2)
 comp3 <- A3*exp(-t/tau3)
@@ -242,25 +230,25 @@ ggplot(r_list, aes(x = Exponential, y = R)) +
   theme(legend.position = "none")
 
 summary(aov(R ~ Exponential, data = r_list))
-TukeyHSD(aov(R ~ Exponential, data = r_list))
+print(SNK.test(aov(R ~ Exponential, data = r_list),"Exponential", group=TRUE))
 
 #Then the Reduced chi-squared
 
 rcs2 <- sapply(result_2exp, function(x) x$red_chi_2exp)
 rcs3 <- sapply(result_3exp, function(x) x$red_chi_3exp)
 rcs4 <- sapply(result_4exp, function(x) x$red_chi_4exp)
-rcs_table <- data.frame("2exp"=rcs2, "3exp"=rcs3, "4exp"=rcs4, check.names = FALSE) #check.name remove annoying "X" in front of any titles start with a number
+rcs_table <- data.frame("2exp"=rcs2, "3exp"=rcs3, "4exp"=rcs4, check.names = FALSE) #check.name into false remove annoying "X" in front of any titles start with a number
 
 rcs_list <- pivot_longer(rcs_table, cols = everything(), names_to = "Exponential", values_to = "RCS")
 ggplot(rcs_list, aes(x = Exponential, y = RCS)) +
   ylim(0, 3) +
   geom_jitter(width = 0.05, size = 1.5, alpha = 0.5) +
   theme_minimal() +
-  labs(y = "Reduced Chi-squared X", title = "Fitting Quality for Each Exponential Model") +
+  labs(y = "Reduced Chi-squared X^2", title = "Fitting Quality for Each Exponential Model") +
   theme(legend.position = "none")
 
 summary(aov(RCS ~ Exponential, data = rcs_list))
-TukeyHSD(aov(RCS ~ Exponential, data = rcs_list))
+print(SNK.test(aov(RCS ~ Exponential, data = rcs_list),"Exponential", group=TRUE))
 
 #F-distribution test is a good way to test the necessity of adding an extra component
 
@@ -275,16 +263,21 @@ n <- length(t)
 T_2to3 <- ((SSE_2 - SSE_3) / SSE_3) * ((n - k_3) / 2)
 T_3to4 <- ((SSE_3 - SSE_4) / SSE_4) * ((n - k_4) / 3)
 T_table <- data.frame("2-3exp"=T_2to3, "3-4exp"=T_3to4, check.names = FALSE)
+p_2to3 <- 1 - pf(T_2to3, df1 = k_3 - k_2, df2 = n - k_3)
+p_3to4 <- 1 - pf(T_3to4, df1 = k_4 - k_3, df2 = n - k_4)
+p_table <- data.frame("2-3exp"=p_2to3, "3-4exp"=p_3to4, check.names = FALSE)
 
 T_list <- pivot_longer(T_table, cols = everything(), names_to = "Exponential", values_to = "TV")
+p_list <- pivot_longer(p_table, cols = everything(), names_to = "Exponential", values_to = "PV")
 ggplot(T_list, aes(x = Exponential, y = TV)) +
   geom_jitter(width = 0.05, size = 1.5, alpha = 0.5) +
   theme_minimal() +
   labs(y = "T Value", title = "Fitting Quality for Each Exponential Model") +
   theme(legend.position = "none")
 
-summary(aov(TV ~ Exponential, data = T_list))
-TukeyHSD(aov(TV ~ Exponential, data = T_list))
+t.test(TV ~ Exponential, data = T_list)
+t.test(PV ~ Exponential, data = p_list)
+
 
 #Finally, we plot the dissected Tau from each exponential fits
 
