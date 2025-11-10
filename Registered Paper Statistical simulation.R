@@ -8,6 +8,7 @@ power <- 0.90
 print(power_test <- pwr.anova.test(k = k, f = f, sig.level = alpha, power = power))
 
 #simulate data
+
 library(minpack.lm) #library for exponential fitting
 library(ggplot2) #library for plotting
 library(tidyr) #library for data format conversion from table data frame to a long list, which is easier for plotting
