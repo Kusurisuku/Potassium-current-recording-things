@@ -1,4 +1,4 @@
-#power analysis with pwr
+#power analysis with pwr library
 library(pwr)
 f <- 0.4
 k <- 3
