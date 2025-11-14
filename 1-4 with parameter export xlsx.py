@@ -16,16 +16,10 @@ from scipy.stats import f
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Load Data
-file_path = r'C:\Docs\Patch statistics\Data\Ito recording study 1\With 4-AP\WT\Epi\WT EPI 4-AP IK.csv'
-#file_path = r'C:\Docs\Patch statistics\Data\Ito recording study 1\With 4-AP\KCND3 Homo\Epi\KCND3 Homo EPI 4-AP IK.csv'
-#file_path = r'C:\Docs\Patch statistics\Data\Ito recording study 1\With 4-AP\KCND3 Homo\Epi\KCND3 Pulse 1 Time to Peak.csv'
-#file_path = r'C:\Docs\Patch statistics\Data\Reginal Ito study\RV Basal EPI\WT RV Basal EPI Raw.csv'
-#file_path = r'C:\Docs\Patch statistics\Data\Reginal Ito study\LV Apex ENDO\WT LV Apex ENDO Raw.csv'
-#file_path = r'C:\Docs\Patch statistics\Data\Reginal Ito study\Anterior Septum\WT Anterior Septum Raw.csv'
-
-Time_name    = 't1702q'
-Current_name = 'c1702q'
-pF_name      = 'pf1702'
+file_path = 
+Time_name    = ''
+Current_name = ''
+pF_name      = ''
 
 def load_data(file_path):
     df = pd.read_csv(file_path).dropna(subset=[Time_name, Current_name])
@@ -141,3 +135,4 @@ plt.show()
 
 logging.info(f"Best Model Selected: {best_model}")
 print(f"Best Model: {best_model}")
+
